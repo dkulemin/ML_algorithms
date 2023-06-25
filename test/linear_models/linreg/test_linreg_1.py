@@ -61,5 +61,5 @@ def test_class_representation(mock_repr, n_iter, learning_rate, default_n_iter, 
 
     assert result == etalon_representation, (
         f'class representation should be {etalon_representation} '
-        f'but got {linreg.__repr__()}'
+        f'but got {result}'
     )
