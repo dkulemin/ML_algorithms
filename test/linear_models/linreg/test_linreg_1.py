@@ -1,12 +1,12 @@
-from mock import patch
-from mock.mock import PropertyMock
+from mock import patch  # type: ignore
+from mock.mock import PropertyMock  # type: ignore
 import pytest
 
 from src.linear_models.linreg.linreg_1 import MyLineReg
 
 
 def test_can_import_class():
-    from src.linear_models.linreg.linreg_1 import MyLineReg
+    from src.linear_models.linreg.linreg_1 import MyLineReg  # noqa: F401
 
 
 @pytest.mark.parametrize(
@@ -45,7 +45,9 @@ def test_class_initialization(n_iter, learning_rate, etalon_n_iter, etalon_lr):
         ]
 )
 @patch.object(MyLineReg, 'REPR_STR', new_callable=PropertyMock)
-def test_class_representation(mock_repr, n_iter, learning_rate, default_n_iter, default_lr):
+def test_class_representation(
+    mock_repr, n_iter, learning_rate, default_n_iter, default_lr
+):
     etalon_n_iter = n_iter if n_iter else default_n_iter
     etalon_learning_rate = learning_rate if learning_rate else default_lr
     representation_string = '{class_name}: n_iter={n_iter}, lr={learning_rate}'
@@ -54,7 +56,7 @@ def test_class_representation(mock_repr, n_iter, learning_rate, default_n_iter, 
     result = repr(linreg)
     mock_repr.assert_called()
     etalon_representation = representation_string.format(
-        class_name = linreg.__class__.__name__,
+        class_name=linreg.__class__.__name__,
         n_iter=etalon_n_iter,
         learning_rate=etalon_learning_rate
     )
