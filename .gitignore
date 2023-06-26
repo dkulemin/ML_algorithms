@@ -1,5 +1,6 @@
-.venv
-.pytest_cache
 __pycache__
+.pytest_cache
+.venv
+.vscode
 data
 test.py
