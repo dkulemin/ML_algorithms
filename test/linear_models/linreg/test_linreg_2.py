@@ -4,8 +4,12 @@ from sklearn.datasets import make_regression
 import numpy as np
 import pandas as pd
 import pytest
+import logging
 
-from src.linear_models.linreg.linreg_2 import MyLineReg
+from src.linear_models.linreg.linreg_2 import MyLineReg, APPLICATION_NAME
+
+
+logger = logging.getLogger(APPLICATION_NAME)
 
 
 def test_can_import_class():
@@ -148,3 +152,26 @@ def test_initialize_weights():
         'weights size should be features + 1'
     )
     assert (result_weights == 1).all(), 'all weights should be 1'
+
+
+@patch.object(MyLineReg, 'LOG_STR', new_callable=PropertyMock)
+def test_print_train_log(mock_log, caplog):
+    log_string = '{start} iter | loss: {loss}'
+    mock_log.return_value = log_string
+    iters = np.arange(0, 10)
+    losses = np.linspace(3, 0, num=10, endpoint=False)
+
+    linreg = MyLineReg()
+    caplog.set_level(logging.INFO)
+    for i, loss in zip(iters, losses):
+        linreg._print_train_log(i, loss)
+        mock_log.assert_called()
+        etalon_log_string = log_string.format(
+            start=i if i else 'start', loss=loss
+        )
+        assert any(
+            etalon_log_string in message for message in caplog.messages
+        ), f'log string `{etalon_log_string}` should be in {caplog.messages},'
+    assert mock_log.call_count == iters.size, (
+        f'should be excectly {iters.size}, but got {mock_log.call_count}'
+    )
