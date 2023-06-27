@@ -40,6 +40,18 @@ class MyLineReg():
 
         logger.addHandler(sh)
 
+    def fit(self, X: pd.DataFrame, y: pd.Series, verbose=False) -> None:
+        features = self._add_bias(X)
+        self._initialize_weights(features)
+        for i in range(self.n_iter):
+            y_hat = features @ self.weights
+            loss = y_hat - y
+            mse_loss = (loss.to_numpy() ** 2).sum() / loss.size
+            if verbose and not i % verbose:
+                self._print_train_log(i, mse_loss)
+            grad = loss @ features * 2 / features.shape[0]
+            self.weights = self.weights - self.learning_rate * grad.to_numpy()
+
     def get_coef(self) -> Optional[np.ndarray]:
         if self.weights.shape[0] > 1:
             return self.weights[1:]

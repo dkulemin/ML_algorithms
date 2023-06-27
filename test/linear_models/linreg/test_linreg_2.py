@@ -1,10 +1,12 @@
 from mock import patch  # type: ignore
 from mock.mock import PropertyMock  # type: ignore
+import logging
+import pytest
+
 from sklearn.datasets import make_regression
+from sklearn.linear_model import LinearRegression
 import numpy as np
 import pandas as pd
-import pytest
-import logging
 
 from src.linear_models.linreg.linreg_2 import MyLineReg, APPLICATION_NAME
 
@@ -175,3 +177,28 @@ def test_print_train_log(mock_log, caplog):
     assert mock_log.call_count == iters.size, (
         f'should be excectly {iters.size}, but got {mock_log.call_count}'
     )
+
+
+def test_fit(caplog):
+    caplog.set_level(logging.INFO)
+    X, y = make_regression(
+        n_samples=1000,
+        n_features=14,
+        n_informative=1,
+        noise=15,
+        random_state=42
+    )
+    X = pd.DataFrame(X)
+    y = pd.Series(y)
+
+    regressor = LinearRegression()
+    regressor.fit(X, y)
+    etalon_weights = np.array([regressor.intercept_] + list(regressor.coef_))
+
+    linreg = MyLineReg()
+    linreg.fit(X, y)
+    result_weghts = linreg.weights
+
+    assert np.allclose(
+        result_weghts, etalon_weights, rtol=1e-05, atol=1e-08
+    ), 'weights should be close enough to weights from sklearn model'
