@@ -1,6 +1,7 @@
 from mock import patch  # type: ignore
 from mock.mock import PropertyMock  # type: ignore
 import logging
+import math
 import pytest
 
 from sklearn.datasets import make_regression
@@ -12,6 +13,20 @@ from src.linear_models.linreg.linreg_2 import MyLineReg, APPLICATION_NAME
 
 
 logger = logging.getLogger(APPLICATION_NAME)
+
+
+@pytest.fixture(scope="module")
+def make_regression_data():
+    X, y = make_regression(
+        n_samples=1000,
+        n_features=14,
+        n_informative=1,
+        noise=15,
+        random_state=42
+    )
+    X = pd.DataFrame(X)
+    y = pd.Series(y)
+    return X, y
 
 
 def test_can_import_class():
@@ -102,17 +117,9 @@ def test_get_coef():
         )
 
 
-def test_add_bias():
-    features, _ = make_regression(
-        n_samples=1000,
-        n_features=14,
-        n_informative=10,
-        noise=15,
-        random_state=42
-    )
+def test_add_bias(make_regression_data):
+    features, _ = make_regression_data
     etalon_features = features.copy()
-    features = pd.DataFrame(features)
-    etalon_features = pd.DataFrame(etalon_features)
     etalon_features.insert(loc=0, column='bias', value=1)
 
     linreg = MyLineReg()
@@ -133,15 +140,8 @@ def test_add_bias():
     )
 
 
-def test_initialize_weights():
-    features, _ = make_regression(
-        n_samples=1000,
-        n_features=14,
-        n_informative=10,
-        noise=15,
-        random_state=42
-    )
-    features = pd.DataFrame(features)
+def test_initialize_weights(make_regression_data):
+    features, _ = make_regression_data
 
     linreg = MyLineReg()
     linreg._initialize_weights(features)
@@ -179,17 +179,9 @@ def test_print_train_log(mock_log, caplog):
     )
 
 
-def test_fit(caplog):
+def test_fit(make_regression_data, caplog):
     caplog.set_level(logging.INFO)
-    X, y = make_regression(
-        n_samples=1000,
-        n_features=14,
-        n_informative=1,
-        noise=15,
-        random_state=42
-    )
-    X = pd.DataFrame(X)
-    y = pd.Series(y)
+    X, y = make_regression_data
 
     regressor = LinearRegression()
     regressor.fit(X, y)
@@ -202,3 +194,35 @@ def test_fit(caplog):
     assert np.allclose(
         result_weghts, etalon_weights, rtol=1e-05, atol=1e-08
     ), 'weights should be close enough to weights from sklearn model'
+
+
+@pytest.mark.parametrize(
+    'verbose',
+    [
+        pytest.param(False, id='verbose_off'),
+        pytest.param(1, id='verbose_1'),
+        pytest.param(2, id='verbose_2'),
+        pytest.param(3, id='verbose_3'),
+        pytest.param(4, id='verbose_4'),
+        pytest.param(5, id='verbose_5'),
+        pytest.param(6, id='verbose_6'),
+        pytest.param(7, id='verbose_7'),
+        pytest.param(8, id='verbose_8'),
+        pytest.param(9, id='verbose_9'),
+        pytest.param(10, id='verbose_10')
+    ]
+)
+@patch.object(MyLineReg, '_print_train_log', new_callable=PropertyMock)
+def test_fit_verbose(mock_log, verbose, make_regression_data):
+    X, y = make_regression_data
+    linreg = MyLineReg()
+    linreg.fit(X, y, verbose=verbose)
+    if verbose:
+        mock_log.assert_called()
+        etalon_log_call_count = math.ceil(100 / verbose)
+    else:
+        etalon_log_call_count = 0
+    assert mock_log.call_count == etalon_log_call_count, (
+        f'should be excactly {etalon_log_call_count} _print_train_log calls, '
+        f'but got {mock_log.call_count} calls'
+    )

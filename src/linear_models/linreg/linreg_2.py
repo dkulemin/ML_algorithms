@@ -40,7 +40,7 @@ class MyLineReg():
 
         logger.addHandler(sh)
 
-    def fit(self, X: pd.DataFrame, y: pd.Series, verbose=False) -> None:
+    def fit(self, X: pd.DataFrame, y: pd.Series, verbose: int = False) -> None:
         features = self._add_bias(X)
         self._initialize_weights(features)
         for i in range(self.n_iter):
