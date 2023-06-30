@@ -9,7 +9,7 @@ from sklearn.linear_model import LinearRegression
 import numpy as np
 import pandas as pd
 
-from src.linear_models.linreg.linreg_2 import MyLineReg, APPLICATION_NAME
+from src.linear_models.linreg.linreg_3 import MyLineReg, APPLICATION_NAME
 
 
 logger = logging.getLogger(APPLICATION_NAME)
@@ -30,7 +30,7 @@ def make_regression_data():
 
 
 def test_can_import_class():
-    from src.linear_models.linreg.linreg_2 import MyLineReg  # noqa: F401
+    from src.linear_models.linreg.linreg_3 import MyLineReg  # noqa: F401
 
 
 @pytest.mark.parametrize(
@@ -225,3 +225,19 @@ def test_fit_verbose(mock_log, verbose, make_regression_data):
         f'should be excactly {etalon_log_call_count} _print_train_log calls, '
         f'but got {mock_log.call_count} calls'
     )
+
+
+def test_predict(make_regression_data):
+    X, y = make_regression_data
+
+    regressor = LinearRegression()
+    regressor.fit(X, y)
+    etalon_preds = regressor.predict(X)
+
+    linreg = MyLineReg()
+    linreg.fit(X, y)
+    result_preds = linreg.predict(X)
+
+    assert np.allclose(
+        etalon_preds, result_preds, rtol=1e-05, atol=1e-07
+    ), 'predictions should be close enough to predictions from sklearn model'
