@@ -9,7 +9,7 @@ from sklearn.linear_model import LinearRegression
 import numpy as np
 import pandas as pd
 
-from src.linear_models.linreg.linreg_3 import MyLineReg, APPLICATION_NAME
+from src.linear_models.linreg.linreg_4 import MyLineReg, APPLICATION_NAME
 
 
 logger = logging.getLogger(APPLICATION_NAME)
@@ -38,7 +38,7 @@ def regressor(make_regression_data):
 
 
 def test_can_import_class():
-    from src.linear_models.linreg.linreg_3 import MyLineReg  # noqa: F401
+    from src.linear_models.linreg.linreg_4 import MyLineReg  # noqa: F401
 
 
 @pytest.mark.parametrize(
