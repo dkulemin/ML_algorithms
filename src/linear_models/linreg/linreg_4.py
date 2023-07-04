@@ -80,11 +80,7 @@ class MyLineReg():
     ) -> float:
         y_pred = features @ self.weights
         mse_loss = self._mean_squared_error(y, y_pred)
-        self.metric_loss = (
-            metric_clbl(y, y_pred)
-            if metric_clbl
-            else mse_loss
-        )
+        self.metric_loss = metric_clbl(y, y_pred) if metric_clbl else mse_loss
         return mse_loss
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
