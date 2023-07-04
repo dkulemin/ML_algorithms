@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Callable
 import logging
 import numpy as np
 import pandas as pd
@@ -58,23 +58,34 @@ class MyLineReg():
         self._initialize_weights(features)
         metric_clbl = self.METRIC_CALLABLE.get(self.metric, None)
         for i in range(self.n_iter):
-            y_pred = features @ self.weights
-            loss = y_pred - y
-            grad = loss @ features * 2 / features.shape[0]
-            self.weights = self.weights - self.learning_rate * grad.to_numpy()
-
-            y_pred = features @ self.weights
-            mse_loss = self._mean_squared_error(y, y_pred)
-            self.metric_loss = (
-                metric_clbl(y, y_pred)
-                if metric_clbl
-                else mse_loss
-            )
+            self._calculate_weights(features, y)
+            mse_loss = self._calculate_metrics(features, y, metric_clbl)
             if verbose and not i % verbose:
                 if metric_clbl:
                     self._print_train_log(i, mse_loss, self.metric_loss)
                 else:
                     self._print_train_log(i, mse_loss)
+
+    def _calculate_weights(self, features: pd.DataFrame, y: pd.Series) -> None:
+        y_pred = features @ self.weights
+        loss = y_pred - y
+        grad = loss @ features * 2 / features.shape[0]
+        self.weights = self.weights - self.learning_rate * grad.to_numpy()
+
+    def _calculate_metrics(
+        self,
+        features: pd.DataFrame,
+        y: pd.Series,
+        metric_clbl: Optional[Callable] = None
+    ) -> float:
+        y_pred = features @ self.weights
+        mse_loss = self._mean_squared_error(y, y_pred)
+        self.metric_loss = (
+            metric_clbl(y, y_pred)
+            if metric_clbl
+            else mse_loss
+        )
+        return mse_loss
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
         features = self._add_bias(X)
