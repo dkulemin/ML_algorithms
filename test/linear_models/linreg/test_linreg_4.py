@@ -6,6 +6,12 @@ import pytest
 
 from sklearn.datasets import make_regression
 from sklearn.linear_model import LinearRegression
+from sklearn.metrics import (
+    mean_absolute_error,
+    mean_absolute_percentage_error,
+    mean_squared_error,
+    r2_score,
+)
 import numpy as np
 import pandas as pd
 
@@ -42,55 +48,118 @@ def test_can_import_class():
 
 
 @pytest.mark.parametrize(
-        'n_iter, learning_rate, etalon_n_iter, etalon_lr',
-        [
-            pytest.param(None, None, 100, 0.1, id='all_defaults'),
-            pytest.param(10, None, 10, 0.1, id='set_n_iter'),
-            pytest.param(None, 0.001, 100, 0.001, id='set_learning_rate'),
-            pytest.param(10, 0.001, 10, 0.001, id='set_all_params'),
-        ]
+    'n_iter, learning_rate, metric, etalon_n_iter, etalon_lr, etalon_metric',
+    [
+        pytest.param(None, None, None, 100, 0.1, None, id='all_defaults'),
+        pytest.param(10, None, None, 10, 0.1, None, id='set_n_iter'),
+        pytest.param(
+            None, 0.001, None, 100, 0.001, None, id='set_learning_rate'
+        ),
+        pytest.param(
+            None, None, 'mae', 100, 0.1, 'mae', id='set_mae_metric'
+        ),
+        pytest.param(
+            None, None, 'mse', 100, 0.1, 'mse', id='set_mse_metric'
+        ),
+        pytest.param(
+            None, None, 'rmse', 100, 0.1, 'rmse', id='set_rmse_metric'
+        ),
+        pytest.param(
+            None, None, 'mape', 100, 0.1, 'mape', id='set_mape_metric'
+        ),
+        pytest.param(
+            None, None, 'r2', 100, 0.1, 'r2', id='set_r2_metric'
+        ),
+        pytest.param(
+            10, 0.001, 'mae', 10, 0.001, 'mae', id='set_all_params'
+        ),
+    ]
 )
-def test_class_initialization(n_iter, learning_rate, etalon_n_iter, etalon_lr):
-    if n_iter and learning_rate:
+def test_class_initialization(
+    n_iter, learning_rate, metric, etalon_n_iter, etalon_lr, etalon_metric
+):
+    if n_iter and learning_rate and metric:
+        linreg = MyLineReg(n_iter, learning_rate, metric)
+    elif n_iter and learning_rate:
         linreg = MyLineReg(n_iter, learning_rate)
+    elif n_iter and metric:
+        linreg = MyLineReg(n_iter, metric=metric)
+    elif learning_rate and metric:
+        linreg = MyLineReg(learning_rate=learning_rate, metric=metric)
     elif n_iter:
         linreg = MyLineReg(n_iter)
     elif learning_rate:
         linreg = MyLineReg(learning_rate=learning_rate)
+    elif metric:
+        linreg = MyLineReg(metric=metric)
     else:
         linreg = MyLineReg()
     assert linreg.n_iter == etalon_n_iter, (
         f'n_iter should be {etalon_n_iter}, but got {linreg.n_iter}'
     )
     assert linreg.learning_rate == etalon_lr, (
-        f'n_iter should be {etalon_lr}, but got {linreg.learning_rate}'
+        f'learning_rate should be {etalon_lr}, but got {linreg.learning_rate}'
+    )
+    assert linreg.metric == etalon_metric, (
+        f'metric should be {etalon_metric}, but got {linreg.metric}'
     )
 
 
 @pytest.mark.parametrize(
-        'n_iter, learning_rate, default_n_iter, default_lr',
-        [
-            pytest.param(None, None, 100, 0.1, id='all_defaults'),
-            pytest.param(10, None, 100, 0.1, id='set_n_iter'),
-            pytest.param(None, 0.001, 100, 0.1, id='set_learning_rate'),
-            pytest.param(10, 0.001, 100, 0.1, id='set_all_params'),
-        ]
+    (
+        'n_iter, learning_rate, metric, '
+        'default_n_iter, default_lr, default_metric'
+    ),
+    [
+        pytest.param(None, None, None, 100, 0.1, None, id='all_defaults'),
+        pytest.param(10, None, None, 100, 0.1, None, id='set_n_iter'),
+        pytest.param(
+            None, 0.001, None, 100, 0.1, None, id='set_learning_rate'
+        ),
+        pytest.param(
+            None, None, 'mae', 100, 0.1, 'mae', id='set_mae_metric'
+        ),
+        pytest.param(
+            None, None, 'mse', 100, 0.1, 'mse', id='set_mse_metric'
+        ),
+        pytest.param(
+            None, None, 'rmse', 100, 0.1, 'rmse', id='set_rmse_metric'
+        ),
+        pytest.param(
+            None, None, 'mape', 100, 0.1, 'mape', id='set_mape_metric'
+        ),
+        pytest.param(
+            None, None, 'r2', 100, 0.1, 'r2', id='set_r2_metric'
+        ),
+        pytest.param(10, 0.001, 'mae', 100, 0.1, 'mae', id='set_all_params'),
+    ]
 )
 @patch.object(MyLineReg, 'REPR_STR', new_callable=PropertyMock)
 def test_class_representation(
-    mock_repr, n_iter, learning_rate, default_n_iter, default_lr
+    mock_repr,
+    n_iter,
+    learning_rate,
+    metric,
+    default_n_iter,
+    default_lr,
+    default_metric
 ):
     etalon_n_iter = n_iter if n_iter else default_n_iter
     etalon_learning_rate = learning_rate if learning_rate else default_lr
-    representation_string = '{class_name}: n_iter={n_iter}, lr={learning_rate}'
+    etalon_metric = metric if metric else default_metric
+
+    representation_string = (
+        '{class_name}: n_iter={n_iter}, lr={learning_rate}, metric={metric}'
+    )
     mock_repr.return_value = representation_string
-    linreg = MyLineReg(etalon_n_iter, etalon_learning_rate)
+    linreg = MyLineReg(etalon_n_iter, etalon_learning_rate, etalon_metric)
     result = repr(linreg)
     mock_repr.assert_called()
     etalon_representation = representation_string.format(
         class_name=linreg.__class__.__name__,
         n_iter=etalon_n_iter,
-        learning_rate=etalon_learning_rate
+        learning_rate=etalon_learning_rate,
+        metric=metric,
     )
 
     assert result == etalon_representation, (
@@ -177,13 +246,53 @@ def test_print_train_log(mock_log, caplog):
         linreg._print_train_log(i, loss)
         mock_log.assert_called()
         etalon_log_string = log_string.format(
-            start=i if i else 'start', loss=loss
+            start=i if i else 'start',
+            loss=loss
         )
         assert any(
             etalon_log_string in message for message in caplog.messages
         ), f'log string `{etalon_log_string}` should be in {caplog.messages},'
     assert mock_log.call_count == iters.size, (
         f'should be excectly {iters.size}, but got {mock_log.call_count}'
+    )
+
+
+@pytest.mark.parametrize(
+    'metric_name',
+    [
+        pytest.param('mae', id='mae_metric'),
+        pytest.param('mse', id='mse_metric'),
+        pytest.param('rmse', id='rmse_metric'),
+        pytest.param('mape', id='mape_metric'),
+        pytest.param('r2', id='r2_metric'),
+    ]
+)
+@patch.object(MyLineReg, 'LOG_METRIC_STR', new_callable=PropertyMock)
+def test_print_train_log_with_metric(mock_log_metric, metric_name, caplog):
+    mock_log_metric.reset_mock()
+    log_metric_string = '{start} iter | loss: {loss} | {metric_name}: {metric}'
+    mock_log_metric.return_value = log_metric_string
+    iters = np.arange(0, 10)
+    losses = np.linspace(3, 0, num=10, endpoint=False)
+    metrics = np.linspace(5, 3, num=10, endpoint=False)
+
+    linreg = MyLineReg(metric=metric_name)
+    caplog.set_level(logging.INFO)
+    for i, loss, metric in zip(iters, losses, metrics):
+        linreg._print_train_log(i, loss, metric)
+        mock_log_metric.assert_called()
+        etalon_log_string = log_metric_string.format(
+            start=i if i else 'start',
+            loss=loss,
+            metric_name=linreg.metric,
+            metric=metric
+        )
+        assert any(
+            etalon_log_string in message for message in caplog.messages
+        ), f'log string `{etalon_log_string}` should be in {caplog.messages},'
+    etalon_call_count = mock_log_metric.call_count
+    assert etalon_call_count == iters.size, (
+        f'should be excectly {iters.size}, but got {etalon_call_count}'
     )
 
 
@@ -243,3 +352,84 @@ def test_predict(make_regression_data, regressor):
     assert np.allclose(
         etalon_preds, result_preds, rtol=1e-05, atol=1e-07
     ), 'predictions should be close enough to predictions from sklearn model'
+
+
+def test_mean_squared_error(regressor, make_regression_data):
+    X, y = make_regression_data
+    etalon_mse = mean_squared_error(y, regressor.predict(X))
+
+    linreg = MyLineReg()
+    linreg.fit(X, y)
+    result_preds = linreg.predict(X)
+    result_mse = linreg._mean_squared_error(y, result_preds)
+
+    assert np.isclose(etalon_mse, result_mse, rtol=1e-05, atol=1e-08), (
+        'mse loss should be close enough to mse loss from sklearn model'
+    )
+
+
+def test_root_mean_squared_error(regressor, make_regression_data):
+    X, y = make_regression_data
+    etalon_rmse = mean_squared_error(y, regressor.predict(X), squared=False)
+
+    linreg = MyLineReg()
+    linreg.fit(X, y)
+    result_preds = linreg.predict(X)
+    result_rmse = linreg._root_mean_squared_error(y, result_preds)
+
+    assert np.isclose(etalon_rmse, result_rmse, rtol=1e-05, atol=1e-08), (
+        'rmse loss should be close enough to rmse loss from sklearn model'
+    )
+
+
+def test_mean_absolute_error(regressor, make_regression_data):
+    X, y = make_regression_data
+    etalon_mae = mean_absolute_error(y, regressor.predict(X))
+
+    linreg = MyLineReg()
+    linreg.fit(X, y)
+    result_preds = linreg.predict(X)
+    result_mae = linreg._mean_absolute_error(y, result_preds)
+
+    assert np.isclose(etalon_mae, result_mae, rtol=1e-05, atol=1e-08), (
+        'mae loss should be close enough to mae loss from sklearn model'
+    )
+
+
+def test_mean_absolute_percentage_error(regressor, make_regression_data):
+    X, y = make_regression_data
+    etalon_mape = 100 * mean_absolute_percentage_error(y, regressor.predict(X))
+
+    linreg = MyLineReg()
+    linreg.fit(X, y)
+    result_preds = linreg.predict(X)
+    result_mape = linreg._mean_absolute_percentage_error(y, result_preds)
+
+    assert np.isclose(etalon_mape, result_mape, rtol=1e-05, atol=1e-08), (
+        'mape loss should be close enough to mape loss from sklearn model'
+    )
+
+
+def test_r2_score(regressor, make_regression_data):
+    X, y = make_regression_data
+    etalon_r2 = r2_score(y, regressor.predict(X))
+
+    linreg = MyLineReg()
+    linreg.fit(X, y)
+    result_preds = linreg.predict(X)
+    result_r2 = linreg._r2_score(y, result_preds)
+
+    assert np.isclose(etalon_r2, result_r2, rtol=1e-05, atol=1e-08), (
+        'r2 score should be close enough to r2 score from sklearn model'
+    )
+
+
+def test_get_best_score():
+    metrics = np.linspace(5, 3, num=10, endpoint=False)
+    linreg = MyLineReg()
+    for metric in metrics:
+        linreg.metric_loss = metric
+        result_metric = linreg.get_best_score()
+        assert metric == result_metric, (
+            '`get_best_score` should return last metric loss value'
+        )
