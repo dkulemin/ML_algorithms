@@ -10,6 +10,38 @@ logger = logging.getLogger(APPLICATION_NAME)
 
 
 class MyLineReg():
+    @staticmethod
+    def _mean_squared_error(y_true, y_pred) -> float:
+        loss = y_true - y_pred
+        return (loss ** 2).sum() / y_pred.size
+
+    @staticmethod
+    def _root_mean_squared_error(y_true, y_pred) -> float:
+        return MyLineReg._mean_squared_error(y_true, y_pred) ** 0.5
+
+    @staticmethod
+    def _mean_absolute_error(y_true, y_pred) -> float:
+        loss = y_true - y_pred
+        return np.abs(loss).sum() / y_pred.size
+
+    @staticmethod
+    def _mean_absolute_percentage_error(y_true, y_pred) -> float:
+        loss = (y_true - y_pred) / y_true
+        return np.abs(loss).sum() / y_pred.size * 100
+
+    @staticmethod
+    def _r2_score(y_true, y_pred) -> float:
+        loss = y_true - y_pred
+        y_normed = y_true - y_true.mean()
+        return 1 - (loss ** 2).sum() / (y_normed ** 2).sum()
+
+    METRIC_CALLABLE = {
+            'mae': _mean_absolute_error,
+            'mse': _mean_squared_error,
+            'rmse': _root_mean_squared_error,
+            'mape': _mean_absolute_percentage_error,
+            'r2': _r2_score,
+        }
 
     REPR_STR = (
         '{class_name} class: n_iter={n_iter}, '
@@ -19,14 +51,6 @@ class MyLineReg():
     LOG_METRIC_STR = '{start} | loss: {loss} | {metric_name}: {metric}'
 
     def __init__(self, n_iter=100, learning_rate=0.1, metric=None) -> None:
-        self.METRIC_CALLABLE = {
-            'mae': self._mean_absolute_error,
-            'mse': self._mean_squared_error,
-            'rmse': self._root_mean_squared_error,
-            'mape': self._mean_absolute_percentage_error,
-            'r2': self._r2_score,
-        }
-
         self.n_iter = n_iter
         self.learning_rate = learning_rate
         self.metric = metric
@@ -123,23 +147,3 @@ class MyLineReg():
                     loss=loss
                 )
             )
-
-    def _mean_squared_error(self, y_true, y_pred) -> float:
-        loss = y_true - y_pred
-        return (loss ** 2).sum() / y_pred.size
-
-    def _root_mean_squared_error(self, y_true, y_pred) -> float:
-        return self._mean_squared_error(y_true, y_pred) ** 0.5
-
-    def _mean_absolute_error(self, y_true, y_pred) -> float:
-        loss = y_true - y_pred
-        return np.abs(loss).sum() / y_pred.size
-
-    def _mean_absolute_percentage_error(self, y_true, y_pred) -> float:
-        loss = (y_true - y_pred) / y_true
-        return np.abs(loss).sum() / y_pred.size * 100
-
-    def _r2_score(self, y_true, y_pred) -> float:
-        loss = y_true - y_pred
-        y_normed = y_true - y_true.mean()
-        return 1 - (loss ** 2).sum() / (y_normed ** 2).sum()
