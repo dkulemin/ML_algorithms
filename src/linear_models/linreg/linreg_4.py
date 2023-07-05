@@ -91,7 +91,7 @@ class MyLineReg():
                     self._print_train_log(i, mse_loss)
 
     def _calculate_weights(self, features: pd.DataFrame, y: pd.Series) -> None:
-        y_pred = features @ self.weights
+        y_pred = self.predict(features, add_bias=False)
         loss = y_pred - y
         grad = loss @ features * 2 / features.shape[0]
         self.weights = self.weights - self.learning_rate * grad.to_numpy()
@@ -102,13 +102,16 @@ class MyLineReg():
         y: pd.Series,
         metric_clbl: Optional[Callable] = None
     ) -> float:
-        y_pred = features @ self.weights
+        y_pred = self.predict(features, add_bias=False)
         mse_loss = self._mean_squared_error(y, y_pred)
         self.metric_loss = metric_clbl(y, y_pred) if metric_clbl else mse_loss
         return mse_loss
 
-    def predict(self, X: pd.DataFrame) -> np.ndarray:
-        features = self._add_bias(X)
+    def predict(self, X: pd.DataFrame, add_bias: bool = True) -> np.ndarray:
+        if add_bias:
+            features = self._add_bias(X)
+        else:
+            features = X.copy()
         return (features @ self.weights).to_numpy()
 
     def get_coef(self) -> Optional[np.ndarray]:
