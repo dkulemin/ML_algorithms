@@ -47,8 +47,8 @@ class MyLineReg():
         '{class_name} class: n_iter={n_iter}, '
         'learning_rate={learning_rate}, metric={metric}'
     )
-    LOG_STR = '{start} | loss: {loss}'
-    LOG_METRIC_STR = '{start} | loss: {loss} | {metric_name}: {metric}'
+    LOG_STR = '{start}\t| loss: {loss}'
+    LOG_METRIC_STR = '{start}\t| loss: {loss}\t| {metric_name}: {metric}'
 
     def __init__(self, n_iter=100, learning_rate=0.1, metric=None) -> None:
         self.n_iter = n_iter
@@ -76,6 +76,7 @@ class MyLineReg():
             logger.handlers.clear()
 
         logger.addHandler(sh)
+        logger.setLevel(logging.INFO)
 
     def fit(self, X: pd.DataFrame, y: pd.Series, verbose: int = False) -> None:
         features = self._add_bias(X)
@@ -134,19 +135,13 @@ class MyLineReg():
     def _print_train_log(
         self, i: int, loss: float, metric: Optional[float] = None
     ) -> None:
+        start = i if i else 'start'
         if self.metric:
-            logger.info(
-                self.LOG_METRIC_STR.format(
-                    start=i if i else 'start',
-                    loss=loss,
-                    metric_name=self.metric,
-                    metric=metric
-                )
-            )
+            logger.info(self.LOG_METRIC_STR.format(
+                start=start,
+                loss=loss,
+                metric_name=self.metric,
+                metric=metric
+            ))
         else:
-            logger.info(
-                self.LOG_STR.format(
-                    start=i if i else 'start',
-                    loss=loss
-                )
-            )
+            logger.info(self.LOG_STR.format(start=start, loss=loss))
