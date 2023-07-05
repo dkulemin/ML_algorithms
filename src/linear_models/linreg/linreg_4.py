@@ -54,7 +54,7 @@ class MyLineReg():
         self.n_iter = n_iter
         self.learning_rate = learning_rate
         self.metric = metric
-        self.weights = np.array([])
+        self.weights: Optional[np.ndarray] = None
         self.metric_loss = 0.
         self._setup_logging()
 
@@ -116,7 +116,7 @@ class MyLineReg():
         return (features @ self.weights).to_numpy()
 
     def get_coef(self) -> Optional[np.ndarray]:
-        if self.weights.shape[0] > 1:
+        if self.weights is not None and self.weights.shape[0] > 1:
             return self.weights[1:]
         else:
             return None
